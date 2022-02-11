@@ -94,14 +94,6 @@ export class Series {
         })
     }
 
-    private findStartPosition(series: number[]): number {
-        for (let i = 0; i < series.length; i++) {
-            if (series[i] >= 1) return i
-        }
-
-        return 0
-    }
-
     private calculateSevenDayAverage(series: number[]): number[] {
         const result: number[] = fillerArray(3)
         for (let i = 3; i < series.length - 3; i++) {
@@ -118,20 +110,6 @@ export class Series {
         const slicedArray = this.getNewCasesAvg().slice(3, -3)
         const smoothedArray = getSmoothedArrayMulti(slicedArray, factor, 3, 1)
         return fillerArray(3).concat(smoothedArray)
-    }
-
-    private findMinimaN(data: number[]): number {
-        let minima = 0
-        let prev: number
-        let next: number
-        for (let i = 1; i < data.length; i++) {
-            const curr = data[i]
-            prev = data[i - 1]
-            next = data[i + 1]
-
-            if (prev > curr && curr < next) minima++
-        }
-        return minima
     }
 
     private findSlices(): Slice[] {

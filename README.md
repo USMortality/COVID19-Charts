@@ -46,7 +46,3 @@ npm run start us
 npm run start us '["california", "texas"]'
 npm run start world '["germany"]'
 ```
-
-```
-node dist/src/worker.js world ./data/world.csv united_states 6 1
-```
