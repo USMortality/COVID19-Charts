@@ -84,7 +84,7 @@ export class Series {
                 result += `"${this.jurisdiction}", "${dateString(slice.peakDate)}", "${slice.peakValue}"` + os.EOL
             }
         }
-        appendFileSync(`./out/${this.folder}/slices.csv`, result)
+        appendFileSync(`./out/${this.folder}/_slices.csv`, result)
     }
 
     private dailyDiff(values: number[]): number[] {

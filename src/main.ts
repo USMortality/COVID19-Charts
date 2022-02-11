@@ -56,7 +56,7 @@ async function processJurisdictions(
 
         const mkdirAsync = promisify(mkdir)
         await mkdirAsync(`./out/${folder}`, { recursive: true })
-        writeFileSync(`./out/${folder}/slices.csv`, '"state", "date_peak", "cases_peak"' + os.EOL)
+        writeFileSync(`./out/${folder}/_slices.csv`, '"state", "date_peak", "cases_peak"' + os.EOL)
 
         for (const [jurisdiction, _data] of rows) {
             if (!jurisdictionFilters ||
