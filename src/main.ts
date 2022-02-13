@@ -9,7 +9,7 @@ import { ChartConfig, makeChart, makeLines } from './chart.js'
 import { execSync } from 'child_process'
 
 async function analyzeSeries(
-    CONFIG: object,
+    CONFIG: any,
     folder: string,
     jurisdiction: string,
     data: Map<string, Row[]>
@@ -26,12 +26,11 @@ async function analyzeSeries(
         yMax: series.findYMax(),
         lines,
         additionalDays: 0,
-        smoothFactor: CONFIG['smoothFactor']
+        smoothFactor: CONFIG.smoothFactor
     }
     const image = await makeChart(
         series, getNameFromKey(jurisdiction), chartConfig
     )
-
     await saveImage(image, `./out/${folder}/${jurisdiction}.png`)
 }
 
@@ -45,7 +44,7 @@ function getProgressbar(title: string, total: number): ProgressBar {
 }
 
 async function processJurisdictions(
-    CONFIG: object, folder: string, dataset: string,
+    CONFIG: any, folder: string, dataset: string,
     jurisdictionFilters: string[]
 ): Promise<void> {
     return new Promise(async (resolve) => {
@@ -79,7 +78,7 @@ function getFilters(): string[] | undefined {
 }
 
 async function main(): Promise<void> {
-    const CONFIG: object = await loadJson('config.json')
+    const CONFIG: any = await loadJson('config.json')
 
     const folder = process.argv[2]
     const jurisdictionFilters: string[] = getFilters()

@@ -15,7 +15,7 @@ export type Row = {
 export class Series {
     private folder: string
     private jurisdiction: string
-    private config: object
+    private config: any
     private smoothFactor: number
 
     private dates: Date[] = []
@@ -59,8 +59,8 @@ export class Series {
     }
 
     private getSmoothFactor(country: string): number {
-        const override = this.config['smoothOverride'][country]
-        const result = override ? override : this.config['smoothFactor']
+        const override = this.config.smoothOverride.country
+        const result = override ? override : this.config.smoothFactor
         return result
     }
 
@@ -78,7 +78,7 @@ export class Series {
 
     logSlices(): void {
         if (!this.slices || !this.slices.length) return
-        let result = ""
+        let result = ''
         for (const slice of this.slices) {
             if (slice.peak) {
                 result += `"${this.jurisdiction}", "${dateString(slice.peakDate)}", "${slice.peakValue}"` + os.EOL
@@ -168,7 +168,7 @@ export class Series {
     }
 
     findYMax(): number {
-        const yOverride = this.config['yOverride'][this.jurisdiction]
+        const yOverride = this.config.yOverride[this.jurisdiction]
         if (yOverride) return yOverride
 
         let result = 0
