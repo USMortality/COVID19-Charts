@@ -26,10 +26,12 @@ async function analyzeSeries(
         yMax: series.findYMax(),
         lines,
         additionalDays: 0,
-        smoothFactor: CONFIG.smoothFactor
+        smoothFactor: CONFIG.smoothFactor,
+        title: getNameFromKey(jurisdiction),
+        dataSource: (folder === 'us') ? 'nytimes.com' : 'ourworldindata.org'
     }
     const image = await makeChart(
-        series, getNameFromKey(jurisdiction), chartConfig
+        series, chartConfig
     )
     await saveImage(image, `./out/${folder}/${jurisdiction}.png`)
 }
@@ -51,7 +53,7 @@ async function processJurisdictions(
         const rows: Map<string, Row[]> = await loadData(dataset)
         const barSize = (jurisdictionFilters ? jurisdictionFilters.length :
             undefined) || rows.size
-        const bar = getProgressbar('Analyzing jurisdictions', barSize)
+        const bar = getProgressbar(`Processing "${folder}"`, barSize)
 
         const mkdirAsync = promisify(mkdir)
         await mkdirAsync(`./out/${folder}`, { recursive: true })
@@ -64,10 +66,6 @@ async function processJurisdictions(
                 bar.tick(1)
             }
         }
-
-        console.log('Stitching image...')
-        execSync(`montage ./out/${folder}/*.png -tile 5x -geometry 1200x700 ./out/${folder}/_all.png`)
-
         resolve()
     })
 }
@@ -87,15 +85,16 @@ async function main(): Promise<void> {
     execSync(`rm -rf ./out/*`)
 
     if (!folder || folder === 'us') {
-        console.log('Processing US states...')
         await processJurisdictions(CONFIG, 'us', './data/us.csv',
             jurisdictionFilters)
     }
     if (!folder || folder === 'world') {
-        console.log('Processing countries...')
         await processJurisdictions(CONFIG, 'world', './data/world.csv',
             jurisdictionFilters)
     }
+
+    console.log('Compressing images...')
+    execSync('pngquant ./out/*/*.png --ext=.png --force')
 
     console.log('Done.')
 }

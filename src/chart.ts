@@ -5,11 +5,7 @@ import { dateString } from './common.js'
 import { Series } from './series.js'
 import { Slice } from './slice.js'
 
-export function makeLines(
-    slices: Slice[],
-    trainingEnd?: number,
-    trainingEndDate?: Date
-): object[] {
+export function makeLines(slices: Slice[]): object[] {
     const lines = []
     const line = {
         type: 'line',
@@ -31,44 +27,34 @@ export function makeLines(
 
     let sliceCount = 1 // Used to not show last slice end line.
     slices.forEach(slice => {
-        if (sliceCount++ < slices.length && slice.end) { // End
-            line.xMin = slice.end
-            line.xMax = slice.end
-            line.borderDash = [0, 0]
-            line.borderColor = 'rgb(0, 0, 0)'
-            line.label.enabled = false
-            lines.push(JSON.parse(JSON.stringify(line)))
-        }
+        // if (sliceCount++ < slices.length && slice.end) { // End
+        //     line.xMin = slice.end
+        //     line.xMax = slice.end
+        //     line.borderDash = [0, 0]
+        //     line.borderColor = 'rgb(0, 0, 0)'
+        //     line.label.enabled = false
+        //     lines.push(JSON.parse(JSON.stringify(line)))
+        // }
         if (slice.peak) { // Peak
             line.xMin = slice.peak
             line.xMax = slice.peak
-            line.borderDash = [4, 4]
-            line.borderColor = 'rgb(255, 0, 0)'
+            line.borderDash = [2, 4]
+            line.borderColor = '#A538FF'
             if (slice.peakDate) {
                 line.label.enabled = true
-                line.label.content = 'Peak: ' + slice.peakValue + ' (' +
+                line.label.content = slice.peakValue + ' (' +
                     dateString(slice.peakDate) + ')'
             }
             lines.push(JSON.parse(JSON.stringify(line)))
         }
     })
 
-    if (trainingEnd && trainingEndDate) {
-        // Prediction end
-        line.xMin = trainingEnd
-        line.xMax = trainingEnd
-        line.borderDash = [10, 10]
-        line.borderColor = 'rgb(64, 64, 64)'
-        line.label.enabled = true
-        line.label.position = 'start'
-        line.label.content = 'Prediction as of: ' + dateString(trainingEndDate)
-        lines.push(JSON.parse(JSON.stringify(line)))
-    }
-
     return lines
 }
 
 export type ChartConfig = {
+    title: string,
+    dataSource: string,
     yMax: number,
     lines: object[],
     additionalDays: number,
@@ -77,15 +63,11 @@ export type ChartConfig = {
 
 export async function makeChart(
     series: Series,
-    title: string,
-    chartConfig: ChartConfig,
-    // tslint:disable-next-line: no-unnecessary-initializer
-    gompertzSeries: number[] = undefined
-
+    chartConfig: ChartConfig
 ): Promise<Buffer> {
     const width = 600
     const height = 335
-    const backgroundColour = 'white'
+    const backgroundColour = '#ffffff'
     const chartJSNodeCanvas = new ChartJSNodeCanvas({
         width, height, backgroundColour, plugins: {
             modern: ['chartjs-plugin-annotation'],
@@ -96,44 +78,31 @@ export async function makeChart(
     const labelsExtended = labels
 
     const datasets = []
-    if (gompertzSeries && gompertzSeries.length > 1) {
-        datasets.push({
-            label: `Gompertz Prediction`,
-            data: gompertzSeries,
-            borderColor: 'rgba(32, 32, 32, 100%)',
-            fill: false,
-            borderWidth: 3,
-            borderDash: [5, 5],
-            pointRadius: 0,
-            tension: 0.4,
-        })
-    }
+    // datasets.push({
+    //     label: `Cases (7d AVG Smoothed ${chartConfig.smoothFactor}x)`,
+    //     data: series.getNewCasesAvgSmooth(),
+    //     borderColor: '#525EDB',
+    //     fill: false,
+    //     borderWidth: 1,
+    //     pointRadius: 0,
+    //     tension: 0.4,
+    // })
     datasets.push({
-        label: `Cases (7d AVG Smoothed ${chartConfig.smoothFactor}x)`,
-        data: series.getNewCasesAvgSmooth(),
-        borderColor: 'rgba(255, 71, 155, 100%)',
-        fill: false,
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.4,
-    })
-    datasets.push({
-        label: 'Cases (7d AVG)',
+        label: 'Cases (Centered 7d AVG)',
         data: series.getNewCasesAvg(),
-        borderColor: ['rgba(43, 71, 155, 100%)'],
+        borderColor: '#4646FF',
         fill: false,
-        borderWidth: 2,
+        borderWidth: 1,
         pointRadius: 0,
         tension: 0.4,
     })
     datasets.push({
         label: 'Cases',
         data: series.getNewCases(),
-        borderColor: ['rgba(0, 255, 0, 100%)'],
-        backgroundColor: 'rgba(0, 255, 0, 100%)',
+        backgroundColor: '#38A1FF',
         fill: false,
         borderWidth: 0,
-        pointRadius: 1.5,
+        pointRadius: 1,
         tension: 0.4,
     })
 
@@ -153,9 +122,20 @@ export async function makeChart(
                 title: {
                     display: true,
                     color: 'rgba(0, 0, 0, 100%)',
-                    text: `COVID-19 Cases [${title}]`,
+                    text: `COVID-19 Cases & Peaks [${chartConfig.title}]`,
                     font: {
                         size: 18
+                    }
+                },
+                subtitle: {
+                    display: true,
+                    color: 'rgba(50, 50, 50, 100%)',
+                    text: `Datasource: ${chartConfig.dataSource}; ` +
+                        `Generated: ${dateString(new Date())} ` +
+                        `by COVID19.USMortality.com`,
+                    font: {
+                        size: 10,
+                        weight: 600
                     }
                 },
                 legend: {

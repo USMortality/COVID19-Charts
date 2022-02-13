@@ -131,5 +131,7 @@ export async function download(urlString: string, file: string): Promise<void> {
 }
 
 export function dateString(date: Date): string {
-    return date.toLocaleDateString('en-US', { timeZone: 'UTC' })
+    return date.toLocaleDateString('en-US', {
+        timeZone: 'UTC', year: '2-digit', month: '2-digit', day: '2-digit'
+    })
 }
