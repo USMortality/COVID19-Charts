@@ -1,5 +1,7 @@
 #!/bin/sh
 git pull
+npm install
+npm run build
 npm run update
 npm start
 git add .
