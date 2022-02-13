@@ -3,4 +3,3 @@ node_modules/
 .gitconfig
 dist/
 coverage
-data/
