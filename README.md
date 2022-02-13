@@ -46,3 +46,6 @@ npm run start us
 npm run start us '["california", "texas"]'
 npm run start world '["germany"]'
 ```
+
+# Crontab Automated Daily Runs
+`46 18 * * * sh /root/COVID19-Charts/daily.sh >> /root/log/COVID19-Charts.log 2>&1`
