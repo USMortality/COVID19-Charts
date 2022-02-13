@@ -1,5 +1,5 @@
 #!/bin/sh
-
+git pull
 npm run update
 npm start
 git add .
