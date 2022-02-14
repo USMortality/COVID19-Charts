@@ -114,7 +114,7 @@ export async function makeChart(
                 title: {
                     display: true,
                     color: 'rgba(0, 0, 0, 100%)',
-                    text: `${chartConfig.dataSourceTitle} & Peaks [${chartConfig.title}]`,
+                    text: `${chartConfig.dataSourceTitle} [${chartConfig.title}]`,
                     font: {
                         size: 18
                     }
