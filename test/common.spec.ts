@@ -64,12 +64,12 @@ describe('common.ts', () => {
                 { 'date': '2020-03-17', 'state': 'Florida', 'cases': '10' },
                 { 'date': '2020-03-18', 'state': 'Florida', 'cases': '15' },
                 { 'date': '2020-03-17', 'state': 'Texas', 'cases': '25' }
-            ])
+            ], 'cases')
             const flData: Row[] = data.get('florida')
             expect(flData.length).to.equal(2)
             deepEqual(flData[0].date, new Date('2020-03-17'))
             deepEqual(flData[1].date, new Date('2020-03-18'))
-            expect(flData[0].cases).to.equal(10)
+            expect(flData[0].dataPoint).to.equal(10)
         })
         it('world.csv format parsing', async () => {
             const data = await processCsvRows([
@@ -88,12 +88,12 @@ describe('common.ts', () => {
                     'location': 'France',
                     'total_cases': '25'
                 }
-            ])
+            ], 'cases')
             const flData: Row[] = data.get('germany')
             expect(flData.length).to.equal(2)
             deepEqual(flData[0].date, new Date('2020-03-17'))
             deepEqual(flData[1].date, new Date('2020-03-18'))
-            expect(flData[0].cases).to.equal(10)
+            expect(flData[0].dataPoint).to.equal(10)
         })
     })
     describe('capitalizeFirstLetters', () => {

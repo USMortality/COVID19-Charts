@@ -10,7 +10,7 @@
     "build": "npx tsc",
     "update": "node dist/src/download.js",
     "clean": "rm -rf ./out/*",
-    "start": "node --max-old-space-size=2048 dist/src/main.js",
+    "start": "node dist/src/main.js",
     "watch": "npx tsc -w",
     "test": "npx mocha",
     "test:coverage": "npx c8 npm test && npx c8 check-coverage --lines 70 --per-file"

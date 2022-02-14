@@ -1,23 +1,5 @@
 {
     "smoothFactor": 200,
     "yOverride": {},
-    "smoothOverride": {},
-    "charts": {
-        "world": [
-            {
-                "key": "cases"
-            },
-            {
-                "key": "deaths"
-            }
-        ],
-        "us": [
-            {
-                "key": "cases"
-            },
-            {
-                "key": "deaths"
-            }
-        ]
-    }
+    "smoothOverride": {}
 }

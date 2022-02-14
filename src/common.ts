@@ -55,13 +55,16 @@ export async function loadJson(filename: string): Promise<object> {
     })
 }
 
-export async function loadData(filename: string): Promise<Map<string, Row[]>> {
+export async function loadData(
+    filename: string,
+    dataKey: string
+): Promise<Map<string, Row[]>> {
     return new Promise(async (resolve, reject) => {
         try {
             resolve(await csvtojson
                 .default({ delimiter: ',' })
                 .fromFile(filename)
-                .then(async (datas: any) => processCsvRows(datas)))
+                .then(async (datas: any) => processCsvRows(datas, dataKey)))
         } catch (e) {
             console.log('Error loading file, did you run `npm run update`?')
             reject(e)
@@ -77,7 +80,10 @@ function shouldProcess(data): boolean {
     return true
 }
 
-export async function processCsvRows(datas: any): Promise<Map<string, Row[]>> {
+export async function processCsvRows(
+    datas: any,
+    dataKey: string
+): Promise<Map<string, Row[]>> {
     const result: Map<string, Row[]> = new Map()
     for await (const data of datas) {
         if (!shouldProcess(data)) continue
@@ -85,10 +91,10 @@ export async function processCsvRows(datas: any): Promise<Map<string, Row[]>> {
         const jurisdiction = data.state || data.location
         if (!jurisdiction) continue
 
+        const value = parseInt(data[dataKey], 10)
         const row: Row = {
             date: new Date(data.date),
-            cases: parseInt((data.cases) ?
-                data.cases : data.total_cases, 10),
+            dataPoint: value ? value : 0,
             positiveRate: data.positive_rate ? data.positive_rate : undefined
         }
 

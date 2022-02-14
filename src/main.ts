@@ -1,4 +1,4 @@
-import { mkdir, writeFile, writeFileSync } from 'fs'
+import { mkdir, writeFileSync } from 'fs'
 import { promisify } from 'node:util'
 import ProgressBar from 'progress'
 import os from 'os'
@@ -7,13 +7,14 @@ import { loadData, saveImage, getNameFromKey, loadJson } from './common.js'
 import { Series, Row } from './series.js'
 import { ChartConfig, makeChart, makeLines } from './chart.js'
 import { execSync } from 'child_process'
+import { Config } from './config.js'
 
 async function analyzeSeries(
-    CONFIG: any,
+    CONFIG: Config,
     folder: string,
     jurisdiction: string,
     data: Map<string, Row[]>
-): Promise<void> {
+): Promise<Buffer> {
     const rows = data.get(jurisdiction)
     const series: Series = new Series(CONFIG, folder, jurisdiction)
     series.loadData(rows)
@@ -27,13 +28,11 @@ async function analyzeSeries(
         lines,
         additionalDays: 0,
         smoothFactor: CONFIG.smoothFactor,
+        dataSourceTitle: CONFIG.title,
         title: getNameFromKey(jurisdiction),
         dataSource: (folder === 'us') ? 'nytimes.com' : 'ourworldindata.org'
     }
-    const image = await makeChart(
-        series, chartConfig
-    )
-    await saveImage(image, `./out/${folder}/${jurisdiction}.png`)
+    return await makeChart(series, chartConfig)
 }
 
 function getProgressbar(title: string, total: number): ProgressBar {
@@ -46,23 +45,32 @@ function getProgressbar(title: string, total: number): ProgressBar {
 }
 
 async function processJurisdictions(
-    CONFIG: any, folder: string, dataset: string,
+    CONFIG: Config,
+    folder: string,
+    dataset: string,
     jurisdictionFilters: string[]
 ): Promise<void> {
     return new Promise(async (resolve) => {
-        const rows: Map<string, Row[]> = await loadData(dataset)
+        const rows: Map<string, Row[]> = await loadData(dataset, CONFIG.dataKey)
         const barSize = (jurisdictionFilters ? jurisdictionFilters.length :
             undefined) || rows.size
         const bar = getProgressbar(`Processing "${folder}"`, barSize)
 
         const mkdirAsync = promisify(mkdir)
-        await mkdirAsync(`./out/${folder}`, { recursive: true })
-        writeFileSync(`./out/${folder}/_slices.csv`, '"state", "date_peak", "cases_peak"' + os.EOL)
+        await mkdirAsync(`./out/${CONFIG.saveKey}/${folder}`, {
+            recursive: true
+        })
+        writeFileSync(`./out/${CONFIG.saveKey}/${folder}/_slices.csv`,
+            '"state", "date_peak", "cases_peak"' + os.EOL)
 
         for (const [jurisdiction, _data] of rows) {
             if (!jurisdictionFilters ||
                 jurisdictionFilters.indexOf(jurisdiction) > -1) {
-                await analyzeSeries(CONFIG, folder, jurisdiction, rows)
+                const image =
+                    await analyzeSeries(CONFIG, folder, jurisdiction, rows)
+                await saveImage(image,
+                    `./out/${CONFIG.saveKey}/${folder}/${jurisdiction}.png`
+                )
                 bar.tick(1)
             }
         }
@@ -71,30 +79,45 @@ async function processJurisdictions(
 }
 
 function getFilters(): string[] | undefined {
-    const input = process.argv[3]
+    const input = process.argv[6]
     return input ? JSON.parse(input) : undefined
 }
 
+async function loadConfig(): Promise<Config> {
+    const config: any = await loadJson('config.json')
+    const result = {
+        title: process.argv[5],
+        folder: process.argv[2],
+        dataKey: process.argv[3],
+        saveKey: process.argv[4],
+        smoothFactor: config.smoothFactor,
+        yOverride: config.yOverride,
+        smoothOverride: config.smoothOverride
+    }
+
+    return result
+}
+
 async function main(): Promise<void> {
-    const CONFIG: any = await loadJson('config.json')
+    const CONFIG: Config = await loadConfig()
 
-    const folder = process.argv[2]
     const jurisdictionFilters: string[] = getFilters()
-    console.log(`Filter: ${folder}, ${jurisdictionFilters}`)
+    console.log(`Config: ${JSON.stringify(CONFIG, null, 2)}, `
+        + `Filter: ${CONFIG.folder}, ${jurisdictionFilters}`)
 
-    execSync(`rm -rf ./out/*`)
+    execSync(`rm -rf ./out/${CONFIG.saveKey}/${CONFIG.folder}/*`)
 
-    if (!folder || folder === 'us') {
+    if (!CONFIG.folder || CONFIG.folder === 'us') {
         await processJurisdictions(CONFIG, 'us', './data/us.csv',
             jurisdictionFilters)
     }
-    if (!folder || folder === 'world') {
+    if (!CONFIG.folder || CONFIG.folder === 'world') {
         await processJurisdictions(CONFIG, 'world', './data/world.csv',
             jurisdictionFilters)
     }
 
     console.log('Compressing images...')
-    execSync('pngquant ./out/*/*.png --ext=.png --force')
+    execSync(`pngquant ./out/${CONFIG.saveKey}/**/*.png --ext=.png --force`)
 
     console.log('Done.')
 }

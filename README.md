@@ -41,10 +41,8 @@ npm run watch
 
 Run batch
 ```
-npm run start
-npm run start us
-npm run start us '["california", "texas"]'
-npm run start world '["germany"]'
+npm run start world total_cases "cases" "COVID-19 Cases"
+npm run start world total_cases "cases" "COVID-19 Cases" '["germany"]'
 ```
 
 # Crontab Automated Daily Runs

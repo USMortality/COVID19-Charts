@@ -25,16 +25,7 @@ export function makeLines(slices: Slice[]): object[] {
         }
     }
 
-    let sliceCount = 1 // Used to not show last slice end line.
     slices.forEach(slice => {
-        // if (sliceCount++ < slices.length && slice.end) { // End
-        //     line.xMin = slice.end
-        //     line.xMax = slice.end
-        //     line.borderDash = [0, 0]
-        //     line.borderColor = 'rgb(0, 0, 0)'
-        //     line.label.enabled = false
-        //     lines.push(JSON.parse(JSON.stringify(line)))
-        // }
         if (slice.peak) { // Peak
             line.xMin = slice.peak
             line.xMax = slice.peak
@@ -55,6 +46,7 @@ export function makeLines(slices: Slice[]): object[] {
 export type ChartConfig = {
     title: string,
     dataSource: string,
+    dataSourceTitle: string,
     yMax: number,
     lines: object[],
     additionalDays: number,
@@ -78,17 +70,17 @@ export async function makeChart(
     const labelsExtended = labels
 
     const datasets = []
-    // datasets.push({
-    //     label: `Cases (7d AVG Smoothed ${chartConfig.smoothFactor}x)`,
-    //     data: series.getNewCasesAvgSmooth(),
-    //     borderColor: '#525EDB',
-    //     fill: false,
-    //     borderWidth: 1,
-    //     pointRadius: 0,
-    //     tension: 0.4,
-    // })
     datasets.push({
-        label: 'Cases (Centered 7d AVG)',
+        label: `${chartConfig.dataSourceTitle} (7d AVG Smoothed ${chartConfig.smoothFactor}x)`,
+        data: series.getNewCasesAvgSmooth(),
+        borderColor: '#000000',
+        fill: false,
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.4,
+    })
+    datasets.push({
+        label: `${chartConfig.dataSourceTitle} (Centered 7d AVG)`,
         data: series.getNewCasesAvg(),
         borderColor: '#4646FF',
         fill: false,
@@ -97,7 +89,7 @@ export async function makeChart(
         tension: 0.4,
     })
     datasets.push({
-        label: 'Cases',
+        label: chartConfig.dataSourceTitle,
         data: series.getNewCases(),
         backgroundColor: '#38A1FF',
         fill: false,
@@ -122,7 +114,7 @@ export async function makeChart(
                 title: {
                     display: true,
                     color: 'rgba(0, 0, 0, 100%)',
-                    text: `COVID-19 Cases & Peaks [${chartConfig.title}]`,
+                    text: `${chartConfig.dataSourceTitle} & Peaks [${chartConfig.title}]`,
                     font: {
                         size: 18
                     }
@@ -144,7 +136,7 @@ export async function makeChart(
                         color: 'rgba(0, 0, 0, 100%)',
                         font: {
                             weight: '200',
-                            size: 12
+                            size: 8
                         }
                     },
                     usePointStyle: true,
@@ -185,7 +177,7 @@ export async function makeChart(
                     min: 0,
                     max: chartConfig.yMax,
                     title: {
-                        display: true, text: 'Cases',
+                        display: true, text: chartConfig.dataSourceTitle,
                         font: {
                             weight: '200',
                             size: 11

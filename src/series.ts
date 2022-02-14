@@ -1,28 +1,27 @@
 import { getSmoothedArrayMulti } from 'gauss-window'
-import lowess from '@stdlib/stats-lowess'
 import os from 'os'
 
 import { fillerArray, fillerDateArray, getNumberLength, dateString } from './common.js'
 import { Slice } from './slice.js'
 import { appendFileSync } from 'fs'
+import { Config } from './config.js'
 
 export type Row = {
     date: Date,
-    cases: number,
+    dataPoint: number,
     positiveRate: number
 }
 
 export class Series {
     private folder: string
     private jurisdiction: string
-    private config: any
+    private config: Config
     private smoothFactor: number
 
     private dates: Date[] = []
     private t: number[] = []
     private cases: number[] = []
     private newCases: number[]
-    private positiveRate: number[] = []
     private newCasesAvg7: number[]
     private newCasesAvg7Smooth: number[]
     readonly newCasesLoess: number[]
@@ -32,7 +31,7 @@ export class Series {
     endPosition: number
 
     constructor(
-        CONFIG: object,
+        CONFIG: Config,
         folder: string,
         jurisdiction: string,
     ) {
@@ -44,11 +43,10 @@ export class Series {
 
     async loadData(rows: Row[]): Promise<void> {
         let i = 0
-        rows.forEach(element => {
+        rows.forEach(row => {
             this.t.push(i++)
-            this.dates.push(element.date)
-            this.cases.push(element.cases)
-            this.positiveRate.push(element.positiveRate)
+            this.dates.push(row.date)
+            this.cases.push(row.dataPoint)
         })
 
         this.newCases = this.dailyDiff(this.cases)
@@ -59,13 +57,9 @@ export class Series {
     }
 
     private getSmoothFactor(country: string): number {
-        const override = this.config.smoothOverride.country
-        const result = override ? override : this.config.smoothFactor
-        return result
-    }
-
-    getLoess(t: number[], values: number[], smoothFactor: number): number[] {
-        return lowess(t, values, { 'f': smoothFactor }).y
+        const result = this.config.smoothOverride[country]
+        if (result) return result
+        else return this.config.smoothFactor
     }
 
     analyze(): void {
@@ -84,7 +78,10 @@ export class Series {
                 result += `"${this.jurisdiction}", "${dateString(slice.peakDate)}", "${slice.peakValue}"` + os.EOL
             }
         }
-        appendFileSync(`./out/${this.folder}/_slices.csv`, result)
+        appendFileSync(
+            `./out/${this.config.saveKey}/${this.folder}/_slices.csv`,
+            result
+        )
     }
 
     private dailyDiff(values: number[]): number[] {
@@ -113,8 +110,6 @@ export class Series {
     }
 
     private findSlices(): Slice[] {
-        const key = 'newCasesAvg7Smooth'
-        const keyRaw = 'newCasesAvg7'
         const result = []
 
         let prev: number
@@ -122,34 +117,32 @@ export class Series {
         let maxCases = 0
         let currentSlice: Slice = new Slice()
         currentSlice.start = 0
-        for (let i = 1; i < this[key].length; i++) {
-            const curr = this[key][i]
-            prev = this[key][i - 1]
-            next = this[key][i + 1]
+        for (let i = 1; i < this.newCasesAvg7Smooth.length; i++) {
+            const curr = this.newCasesAvg7Smooth[i]
+            prev = this.newCasesAvg7Smooth[i - 1]
+            next = this.newCasesAvg7Smooth[i + 1]
 
             // Skip first 0s
             if (curr === 0) {
                 currentSlice.start = i + 1
                 continue
             }
-            if (this[keyRaw][i] > maxCases) { // New local max
-                maxCases = this[keyRaw][i]
+            if (this.newCasesAvg7[i] > maxCases) { // New local max
+                maxCases = this.newCasesAvg7[i]
                 currentSlice.peak = i
                 currentSlice.peakDate = this.dates[i]
-                currentSlice.peakValue = Math.round(this[keyRaw][i])
+                currentSlice.peakValue = Math.round(this.newCasesAvg7[i])
                     .toLocaleString()
             }
             if (prev > curr && curr < next) { // New local minimum detected
                 // Set end
                 currentSlice.end = i
 
-                // Set smooth factor
-                currentSlice.setSmoothFactor(this[key].length)
                 result.push(currentSlice)
                 currentSlice = new Slice()
                 currentSlice.start = i
 
-                // Reset case counter
+                // Reset max case counter
                 maxCases = 0
             }
         }
@@ -161,14 +154,16 @@ export class Series {
 
         // Last slice
         currentSlice.end = max
-        currentSlice.setSmoothFactor(this[key].length)
         result.push(currentSlice)
 
         return result
     }
 
     findYMax(): number {
-        const yOverride = this.config.yOverride[this.jurisdiction]
+        let yOverride
+        try {
+            yOverride = this.config.yOverride[this.jurisdiction]
+        } catch (e) { }
         if (yOverride) return yOverride
 
         let result = 0

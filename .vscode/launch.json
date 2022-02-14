@@ -14,7 +14,8 @@
             "program": "${workspaceFolder}/src/main.ts",
             "args": [
                 "world",
-                "[\"germany\"]"
+                "[\"germany\"]",
+                "total_deaths"
             ],
             "preLaunchTask": "tsc: build - tsconfig.json",
             "outFiles": [

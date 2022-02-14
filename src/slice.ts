@@ -5,9 +5,4 @@ export class Slice {
     peakDate: Date
     peakValue: string
     smoothFactor: number
-
-    setSmoothFactor(allDataLength: number): void {
-        const sliceLength = this.end - this.start
-        this.smoothFactor = 1 / (sliceLength * 20 / allDataLength)
-    }
 }

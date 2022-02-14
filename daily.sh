@@ -7,11 +7,16 @@ export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || pr
 nvm use 16
 
 git pull
-rm -f package-lock.json 
+rm -f package-lock.json
 npm install
 npm run build
 npm run update
-npm start
+
+npm run start world total_cases "covid_cases" "COVID-19 Cases"
+npm run start world total_deaths "covid_deaths" "COVID-19 Deaths"
+npm run start us cases "covid_cases" "COVID-19 Cases"
+npm run start us deaths "covid_deaths" "COVID-19 Deaths"
+
 git add .
 git commit -m "daily update $(date +"%Y/%m/%d")"
 git push
