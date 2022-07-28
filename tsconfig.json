@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "sourceMap": true,
+        "target": "es2021",
+        "module": "esnext",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "typeRoots": [
+            "node_modules/@types",
+            "types"
+        ],
+    },
+    "include": [
+        "src",
+        "types",
+        "test"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
